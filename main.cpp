@@ -2,30 +2,49 @@
 #include <iostream>
 #include <map>
 #include <array>
+#include <fstream>
+#include <chrono>
 
 int main(){
 
-    std::map<std::array<std::size_t, 2>, double, array_cmp<row_wise>> data;
-    for (size_t i=0; i<6; i++){
-        for (size_t j=0; j<7; j++){
-            data.insert(std::pair<std::array<std::size_t, 2>, double>({i,j}, i*(j+1)));
-        }
-    }
-
-    std::array<std::size_t, 2> a{0,3};
-    std::array<std::size_t, 2> b{1,0};
-    auto itlow = data.lower_bound(a);
-    auto itup = data.upper_bound(b);
-
-    for (auto it=itlow; it != itup; it++){
-        std::cout << it->first[0]<<" "<<it->first[1] << " " << it->second << std::endl;
-    }
-
-    Algebra::Matrix<double, column_wise> M;
-    std::string fname = "lnsp_131.mtx";
+    Algebra::Matrix<double, row_wise> M;
+    std::string fname("lnsp_131.mtx");
     M.read(fname);
+    int N=M.get_row();
+    std::vector<double> test(N, 1.);
+    
+    std::chrono::steady_clock::time_point begin1 = std::chrono::steady_clock::now();
+    std::vector<double> result1 = M*test;
+    std::chrono::steady_clock::time_point end1 = std::chrono::steady_clock::now();
+    std::cout << "Uncompressed Row-wise Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> 
+    (end1 - begin1).count() << "[ns]" << std::endl;
 
-    //std::cout<<M[{9,1}]<<std::endl;
+    M.compress();
+    std::chrono::steady_clock::time_point begin2 = std::chrono::steady_clock::now();
+    std::vector<double> result2 = M*test;
+    std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
+    std::cout << "Compressed Row-wise Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> 
+    (end2 - begin2).count() << "[ns]" << std::endl;
 
+    Algebra::Matrix<double, column_wise> M_col;
+    M_col.read(fname);
+    
+    std::chrono::steady_clock::time_point begin3 = std::chrono::steady_clock::now();
+    std::vector<double> result3 = M_col*test;
+    std::chrono::steady_clock::time_point end3 = std::chrono::steady_clock::now();
+    std::cout << "Uncompressed Column-wise Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> 
+    (end3 - begin3).count() << "[ns]" << std::endl;
+    
+    M_col.compress();
+    std::chrono::steady_clock::time_point begin4 = std::chrono::steady_clock::now();
+    std::vector<double> result4 = M_col*test;
+    std::chrono::steady_clock::time_point end4 = std::chrono::steady_clock::now();
+    std::cout << "Compressed Column-wise Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> 
+    (end4 - begin4).count() << "[ns]" << std::endl;
+    
+    bool equal=(result1 == result2) && (result3 == result4);
+    std::cout<<equal<<std::endl;
+    
     return 0;
+    
 };

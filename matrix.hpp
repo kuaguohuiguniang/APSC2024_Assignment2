@@ -5,9 +5,11 @@
 #include <map>
 #include <array>
 #include <vector>
+#include <fstream>
 
 enum StorageOrder{ row_wise, column_wise};
 
+// order object that will be used in the uncompressed std::map
 template<StorageOrder W>
 struct array_cmp
 {
@@ -17,6 +19,7 @@ struct array_cmp
     };
 };
 
+// order object specified for column-wise
 template<>
 struct array_cmp<column_wise>
 {
@@ -32,7 +35,7 @@ struct array_cmp<column_wise>
 };
 
 namespace Algebra{
-
+    // row-wise storage matrix
     template <class T, StorageOrder W>
     class Matrix{
         private:
@@ -41,7 +44,9 @@ namespace Algebra{
             std::size_t n_col;
             std::size_t nnz;
             bool is_compressed;
-
+            T zero{0}; //default zero 
+            
+            // The following three vectors are for compressed matrix
             std::vector<T> data_cmp;
             std::vector<unsigned int> index;
             std::vector<unsigned int> ptr;
@@ -57,6 +62,14 @@ namespace Algebra{
                         }
             };
 
+            inline size_t get_col(){
+                return n_col;
+            };
+
+            inline size_t get_row(){
+                return n_row;
+            };
+
             void compress();
 
             void uncompress();
@@ -65,7 +78,7 @@ namespace Algebra{
                 return is_compressed;
             };
 
-            const T operator[](std::array<std::size_t,2>&) const;
+            const T& operator[](std::array<std::size_t,2>&) const;
   
             T& operator[](std::array<std::size_t,2>&);
             
@@ -73,10 +86,12 @@ namespace Algebra{
 
             void read(std::string&);
 
-            template <class U, StorageOrder V> friend 
-            std::vector<U> operator*(const Matrix<U, V>& M, const std::vector<U>& x);
+            //template <class U, StorageOrder V> friend 
+            //std::vector<U> operator*(const Matrix<U, V>& M, const std::vector<U>& x);
+            std::vector<T> operator*(const std::vector<T>&);
     };
 
+    // column-wise storage matrix
     template <class T>
     class Matrix<T, column_wise>{
         private:
@@ -85,7 +100,9 @@ namespace Algebra{
             std::size_t n_col;
             std::size_t nnz;
             bool is_compressed;
-
+            T zero{0};
+            
+            // The following three vectors are for compressed matrix
             std::vector<T> data_cmp;
             std::vector<unsigned int> index;
             std::vector<unsigned int> ptr;
@@ -101,6 +118,14 @@ namespace Algebra{
                         }
                     };
 
+            inline size_t get_col(){
+                return n_col;
+            };
+
+            inline size_t get_row(){
+                return n_row;
+            };
+
             void compress();
 
             void uncompress();
@@ -109,17 +134,20 @@ namespace Algebra{
                 return is_compressed;
             };
 
-            const T operator[](std::array<std::size_t,2>&) const;
+            const T& operator[](std::array<std::size_t,2>&) const;
   
             T& operator[](std::array<std::size_t,2>&);
             
             void resize(std::size_t rows, std::size_t cols);
             
-            void read(std::string&);
+            void read(std::string& fname);
 
-            template <class U, StorageOrder V> friend 
-            std::vector<U> operator*(const Matrix<U, V>& M, const std::vector<U>& x);
+            //template <class U, StorageOrder V> friend 
+            //std::vector<U> operator*(const Matrix<U, V>& M, const std::vector<U>& x);
+            std::vector<T> operator*(const std::vector<T>&);
     };
 }
+
+#include "matrix_def.hpp"
 
 #endif
