@@ -2,7 +2,7 @@
 #define HH_MATRIX_HPP_HH
 
 #include "matrix.hpp"
-
+// clang-format off
 //This hpp file defines the methods in matrix.hpp
 
 template <class T, StorageOrder W>
@@ -31,7 +31,7 @@ void Algebra::Matrix<T, W>::compress(){
     }
     data.clear();
 };
-
+//@note you could have only specialised the method, not need to specialize the entire class.
 template <class T>
 void Algebra::Matrix<T, column_wise>::compress(){
     if (is_compressed){
@@ -104,6 +104,15 @@ template<class T, StorageOrder W>
 const T& Algebra::Matrix<T, W>::operator[](std::array<std::size_t,2>& a) const{
     if (a[0] < n_row && a[1] < n_col){
         if (!is_compressed){
+            //@ note
+            /* why not
+            auto pos = data.find(a);
+            if (pos != data.end()){
+                return pos->second;
+            }else{
+                return zero;
+            }
+            */
             if (data.find(a)!= data.end()){
                 return data.at(a);
             }else{
@@ -111,6 +120,7 @@ const T& Algebra::Matrix<T, W>::operator[](std::array<std::size_t,2>& a) const{
             }
         }else{
             for (size_t j=ptr[a[0]]; j<ptr[a[0]+1]; j++){
+                //@note since the column indexes are ordered you could have used std::binary_search
                 if (index[j] == a[1]){
                     return data_cmp[j];
                 }
@@ -193,6 +203,9 @@ void Algebra::Matrix<T,W>::resize(std::size_t rows, std::size_t cols){
         n_row = rows;
         n_col = cols;
     }
+    //@note This is not working. If you resize you have to considere the case in which
+    // the resized matrix is smaller than the original one. In this case you have to remove
+    // the elements that are out of the new matrix.
 };
 
 template<class T>
